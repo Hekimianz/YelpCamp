@@ -1,6 +1,7 @@
 const express = require('express');
 const path = require('path');
 const methodOverride = require('method-override');
+const ejsMate = require('ejs-mate');
 const mongoose = require('mongoose');
 const Campground = require('./models/campground');
 mongoose.connect('mongodb://127.0.0.1:27017/yelp-camp');
@@ -13,6 +14,7 @@ db.once('open', () => {
 
 const app = express();
 
+app.engine('ejs', ejsMate);
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
 app.use(express.urlencoded({ extended: true }));
@@ -55,6 +57,6 @@ app.delete('/campgrounds/:id', async (req, res) => {
   res.redirect('/campgrounds');
 });
 
-app.listen(3000, () => {
-  console.log('Server running on port 3000');
+app.listen(4000, () => {
+  console.log('Server running on port 4000');
 });
