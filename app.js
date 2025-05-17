@@ -2,8 +2,11 @@ const express = require('express');
 const path = require('path');
 const methodOverride = require('method-override');
 const ejsMate = require('ejs-mate');
+const Joi = require('joi');
+const { campgroundSchema } = require('./schemas');
 const mongoose = require('mongoose');
 const Campground = require('./models/campground');
+const ExpressError = require('./utils/ExpressError');
 mongoose.connect('mongodb://127.0.0.1:27017/yelp-camp');
 
 const db = mongoose.connection;
@@ -19,6 +22,16 @@ app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
 app.use(express.urlencoded({ extended: true }));
 app.use(methodOverride('_method'));
+
+const validateCampground = (req, res, next) => {
+  const { error } = campgroundSchema.validate(req.body);
+
+  if (error) {
+    const msg = error.details.map((el) => el.message).join(',');
+    throw new ExpressError(msg, 400);
+  }
+  next();
+};
 
 app.get('/campgrounds', async (req, res) => {
   const campgrounds = await Campground.find({});
@@ -39,13 +52,13 @@ app.get('/campgrounds/:id/edit', async (req, res) => {
   res.render('campgrounds/edit', { campground });
 });
 
-app.post('/campgrounds', async (req, res) => {
+app.post('/campgrounds', validateCampground, async (req, res) => {
   const campground = new Campground(req.body.campground);
   await campground.save();
   res.redirect(`/campgrounds/${campground._id}`);
 });
 
-app.put('/campgrounds/:id', async (req, res) => {
+app.put('/campgrounds/:id', validateCampground, async (req, res) => {
   const { id } = req.params;
   await Campground.findByIdAndUpdate(id, { ...req.body.campground });
   res.redirect(`/campgrounds/${id}`);
@@ -55,6 +68,16 @@ app.delete('/campgrounds/:id', async (req, res) => {
   const { id } = req.params;
   await Campground.findByIdAndDelete(id);
   res.redirect('/campgrounds');
+});
+
+app.all(/(.*)/, (req, res, next) => {
+  next(new ExpressError('Page Not Found', 404));
+});
+
+app.use((err, req, res, next) => {
+  const { statusCode = 500 } = err;
+  if (!err.message) err.message = 'Something went wrong!';
+  res.status(statusCode).render('error', { err });
 });
 
 app.listen(4000, () => {
