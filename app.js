@@ -5,10 +5,14 @@ const ejsMate = require('ejs-mate');
 const mongoose = require('mongoose');
 const ExpressError = require('./utils/ExpressError');
 mongoose.connect('mongodb://127.0.0.1:27017/yelp-camp');
-const campgrounds = require('./routes/campgrounds');
-const reviews = require('./routes/reviews');
+const campgroundsRoutes = require('./routes/campgrounds');
+const reviewsRoutes = require('./routes/reviews');
+const usersRoutes = require('./routes/users');
 const session = require('express-session');
 const flash = require('connect-flash');
+const passport = require('passport');
+const LocalStrategy = require('passport-local');
+const User = require('./models/user');
 
 const db = mongoose.connection;
 db.on('error', console.error.bind(console, 'connection error'));
@@ -35,15 +39,22 @@ const sessionConfig = {
 };
 app.use(session(sessionConfig));
 app.use(flash());
+app.use(passport.initialize());
+app.use(passport.session());
+passport.use(new LocalStrategy(User.authenticate()));
+passport.serializeUser(User.serializeUser());
+passport.deserializeUser(User.deserializeUser());
 
 app.use((req, res, next) => {
+  res.locals.currentUser = req.user;
   res.locals.success = req.flash('success');
   res.locals.error = req.flash('error');
   next();
 });
 
-app.use('/campgrounds', campgrounds);
-app.use('/campgrounds/:id/reviews', reviews);
+app.use('/campgrounds', campgroundsRoutes);
+app.use('/campgrounds/:id/reviews', reviewsRoutes);
+app.use('/', usersRoutes);
 
 app.all(/(.*)/, (req, res, next) => {
   next(new ExpressError('Page Not Found', 404));
