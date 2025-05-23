@@ -60,6 +60,8 @@ app.use('/campgrounds', campgroundsRoutes);
 app.use('/campgrounds/:id/reviews', reviewsRoutes);
 app.use('/', usersRoutes);
 
+app.get('/', (req, res) => res.render('home'));
+
 app.all(/(.*)/, (req, res, next) => {
   next(new ExpressError('Page Not Found', 404));
 });
