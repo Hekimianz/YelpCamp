@@ -14,12 +14,16 @@ const sample = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
 const seedDB = async () => {
   await Campground.deleteMany({});
-  for (let i = 0; i < 50; i++) {
+  for (let i = 0; i < 300; i++) {
     const rand1000 = Math.floor(Math.random() * 1000);
     const price = Math.floor(Math.random() * 20) + 10;
     const camp = new Campground({
       title: `${sample(descriptors)} ${sample(places)}`,
       location: `${cities[rand1000].city}, ${cities[rand1000].state}`,
+      geometry: {
+        type: 'Point',
+        coordinates: [cities[rand1000].longitude, cities[rand1000].latitude],
+      },
       images: [
         {
           url: ' https://static01.nyt.com/images/2021/07/24/us/24camp-over-1b/merlin_191277501_fb97d1ad-dc13-4e53-9eac-e5b40a340884-articleLarge.jpg?quality=75&auto=webp&disable=upscale',
