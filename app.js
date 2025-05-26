@@ -8,9 +8,9 @@ const methodOverride = require('method-override');
 const ejsMate = require('ejs-mate');
 const mongoose = require('mongoose');
 const ExpressError = require('./utils/ExpressError');
-// const dbUrl = process.env.DB_URL;
-// mongoose.connect(dbUrl);
-mongoose.connect('mongodb://127.0.0.1:27017/yelp-camp');
+const dbUrl = process.env.DB_URL;
+mongoose.connect(dbUrl);
+
 const campgroundsRoutes = require('./routes/campgrounds');
 const reviewsRoutes = require('./routes/reviews');
 const usersRoutes = require('./routes/users');
@@ -38,8 +38,8 @@ app.use(methodOverride('_method'));
 app.use(mongoSanitize());
 app.use(express.static(path.join(__dirname, 'public')));
 const store = new MongoDBStore({
-  url: 'mongodb://127.0.0.1:27017/yelp-camp',
-  secret: 'thisshouldbeasecret',
+  url: dbUrl,
+  secret: process.env.SECRET,
   touchAfter: 24 * 60 * 60,
 });
 store.on('error', function (e) {
@@ -48,7 +48,7 @@ store.on('error', function (e) {
 const sessionConfig = {
   store,
   name: 'session',
-  secret: 'thisshouldbeabettersecret',
+  secret: process.env.SECRET,
   resave: false,
   saveUninitialized: true,
   cookie: {
