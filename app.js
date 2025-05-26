@@ -8,6 +8,8 @@ const methodOverride = require('method-override');
 const ejsMate = require('ejs-mate');
 const mongoose = require('mongoose');
 const ExpressError = require('./utils/ExpressError');
+// const dbUrl = process.env.DB_URL;
+// mongoose.connect(dbUrl);
 mongoose.connect('mongodb://127.0.0.1:27017/yelp-camp');
 const campgroundsRoutes = require('./routes/campgrounds');
 const reviewsRoutes = require('./routes/reviews');
@@ -17,6 +19,8 @@ const flash = require('connect-flash');
 const passport = require('passport');
 const LocalStrategy = require('passport-local');
 const User = require('./models/user');
+const mongoSanitize = require('express-mongo-sanitize');
+const MongoDBStore = require('connect-mongo')(session);
 
 const db = mongoose.connection;
 db.on('error', console.error.bind(console, 'connection error'));
@@ -31,8 +35,19 @@ app.set('view engine', 'ejs');
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(methodOverride('_method'));
+app.use(mongoSanitize());
 app.use(express.static(path.join(__dirname, 'public')));
+const store = new MongoDBStore({
+  url: 'mongodb://127.0.0.1:27017/yelp-camp',
+  secret: 'thisshouldbeasecret',
+  touchAfter: 24 * 60 * 60,
+});
+store.on('error', function (e) {
+  console.log('STORE ERROR', e);
+});
 const sessionConfig = {
+  store,
+  name: 'session',
   secret: 'thisshouldbeabettersecret',
   resave: false,
   saveUninitialized: true,
